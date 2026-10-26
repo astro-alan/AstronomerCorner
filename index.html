@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stargazing Events &amp; Bookings</title>
+  <meta name="description" content="Guided stargazing nights, telescope workshops and dark-sky retreats. Book your place online.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!--
+    Placeholders:
+      .blank[data-field]  -> text the club needs to supply. Fill these in the SITE object at the top of script.js.
+      .img-ph[data-label] -> image slots. Replace each with an <img src="..." alt="..."> when you have the photo.
+  -->
+  <canvas id="starfield" aria-hidden="true"></canvas>
+
+  <!-- ===== Top navigation ===== -->
+  <header class="site-header" id="top">
+    <nav class="nav container" aria-label="Main navigation">
+      <a href="#home" class="logo">
+        <div class="img-ph icon-only" data-label="Logo"></div>
+        <span class="blank" data-field="clubName">Club name</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#home" class="active">Home</a></li>
+        <li><a href="#events">Events</a></li>
+        <li><a href="#calendar">Calendar</a></li>
+        <li><a href="#membership">Membership</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="#my-bookings" class="nav-bookings">My Bookings <span class="badge" id="booking-count">0</span></a></li>
+        <li><a href="#events" class="btn btn-primary btn-sm">Book Now</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ===== Hero ===== -->
+    <section class="hero" id="home">
+      <div class="container hero-inner">
+        <p class="eyebrow">Dark-sky community · Est. <span class="blank" data-field="established">Year</span></p>
+        <h1>Look up. <span class="grad">The universe is waiting.</span></h1>
+        <p class="lead">Guided stargazing nights, telescope workshops and dark-sky retreats led by experienced amateur astronomers. All equipment provided — just bring your curiosity.</p>
+
+        <form class="quick-search" id="quick-search">
+          <label>
+            <span>Event type</span>
+            <select id="qs-type">
+              <option value="all">Any event</option>
+              <option value="stargazing">Stargazing night</option>
+              <option value="workshop">Workshop</option>
+              <option value="retreat">Retreat</option>
+              <option value="kids">Family &amp; kids</option>
+            </select>
+          </label>
+          <label>
+            <span>From date</span>
+            <input type="date" id="qs-date">
+          </label>
+          <label>
+            <span>Guests</span>
+            <input type="number" id="qs-guests" min="1" max="10" value="2">
+          </label>
+          <button type="submit" class="btn btn-primary">Find events</button>
+        </form>
+
+        <div class="hero-stats">
+          <div><strong><span class="blank" data-field="statMembers">Number</span></strong><span>members</span></div>
+          <div><strong><span class="blank" data-field="statNights">Number</span></strong><span>nights a year</span></div>
+          <div><strong><span class="blank" data-field="statRating">Rating</span></strong><span>average rating</span></div>
+          <div><strong><span class="blank" data-field="statSky">Bortle class</span></strong><span>dark-sky site</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Tonight's sky ===== -->
+    <section class="section sky-tonight">
+      <div class="container sky-grid">
+        <div class="moon-card card">
+          <h3>Tonight's sky</h3>
+          <div class="moon-wrap">
+            <div class="moon" id="moon"><div class="moon-shadow" id="moon-shadow"></div></div>
+            <div>
+              <p class="moon-phase" id="moon-phase">—</p>
+              <p class="muted" id="moon-illum">—</p>
+            </div>
+          </div>
+          <p class="muted small" id="sky-advice"></p>
+        </div>
+        <div class="card highlights">
+          <h3>This month's highlights</h3>
+          <ul class="highlight-list" id="highlight-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Events ===== -->
+    <section class="section" id="events">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Upcoming</p>
+            <h2>Events &amp; experiences</h2>
+          </div>
+          <p class="muted">Spaces are limited to keep groups small and telescopes free. Live availability below.</p>
+        </div>
+
+        <div class="filters" role="toolbar" aria-label="Event filters">
+          <div class="chips" id="type-chips">
+            <button class="chip active" data-type="all">All</button>
+            <button class="chip" data-type="stargazing">Stargazing</button>
+            <button class="chip" data-type="workshop">Workshops</button>
+            <button class="chip" data-type="retreat">Retreats</button>
+            <button class="chip" data-type="kids">Family</button>
+          </div>
+          <div class="filter-controls">
+            <input type="search" id="event-search" placeholder="Search events…" aria-label="Search events">
+            <select id="event-sort" aria-label="Sort events">
+              <option value="date">Soonest first</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="spaces">Most spaces left</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="event-grid" id="event-grid"></div>
+        <p class="empty" id="events-empty" hidden>No events match your filters. Try clearing the search.</p>
+      </div>
+    </section>
+
+    <!-- ===== Calendar ===== -->
+    <section class="section alt" id="calendar">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Plan ahead</p>
+            <h2>Event calendar</h2>
+          </div>
+          <p class="muted">Click any highlighted date to see what's on.</p>
+        </div>
+        <div class="calendar-layout">
+          <div class="calendar card">
+            <div class="cal-head">
+              <button class="icon-btn" id="cal-prev" aria-label="Previous month">‹</button>
+              <h3 id="cal-title"></h3>
+              <button class="icon-btn" id="cal-next" aria-label="Next month">›</button>
+            </div>
+            <div class="cal-grid cal-dow">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+            <div class="cal-grid" id="cal-days"></div>
+            <div class="cal-legend">
+              <span><i class="dot stargazing"></i>Stargazing</span>
+              <span><i class="dot workshop"></i>Workshop</span>
+              <span><i class="dot retreat"></i>Retreat</span>
+              <span><i class="dot kids"></i>Family</span>
+            </div>
+          </div>
+          <div class="card cal-side">
+            <h3 id="cal-side-title">Select a date</h3>
+            <div id="cal-side-list"><p class="muted">Dates with events are marked with a coloured dot.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Membership ===== -->
+    <section class="section" id="membership">
+      <div class="container">
+        <div class="section-head center">
+          <p class="eyebrow">Join the society</p>
+          <h2>Membership plans</h2>
+          <p class="muted">Members save on every booking and get first access to retreats and rare-event nights.</p>
+        </div>
+        <div class="billing-toggle">
+          <span>Monthly</span>
+          <label class="switch"><input type="checkbox" id="billing-annual"><span class="slider"></span></label>
+          <span>Annual</span>
+        </div>
+        <div class="plans">
+          <article class="plan card">
+            <h3>Stargazer</h3>
+            <p class="price"><span class="amt" data-monthly="priceStargazerMonthly" data-annual="priceStargazerAnnual"></span><span class="per">/mo</span></p>
+            <ul>
+              <li>Book any public event</li>
+              <li>Monthly sky newsletter</li>
+              <li>Community forum access</li>
+            </ul>
+            <button class="btn btn-ghost" data-plan="Stargazer">Sign up</button>
+          </article>
+          <article class="plan card featured">
+            <span class="ribbon">Most popular</span>
+            <h3>Observer</h3>
+            <p class="price"><span class="amt" data-monthly="priceObserverMonthly" data-annual="priceObserverAnnual"></span><span class="per">/mo</span></p>
+            <ul>
+              <li>15% off all event bookings</li>
+              <li>48-hour early booking window</li>
+              <li>Free telescope loan (1 weekend/month)</li>
+              <li>Members-only observing nights</li>
+            </ul>
+            <button class="btn btn-primary" data-plan="Observer">Join Observer</button>
+          </article>
+          <article class="plan card">
+            <h3>Astronomer</h3>
+            <p class="price"><span class="amt" data-monthly="priceAstronomerMonthly" data-annual="priceAstronomerAnnual"></span><span class="per">/mo</span></p>
+            <ul>
+              <li>25% off all event bookings</li>
+              <li>Priority retreat booking</li>
+              <li>Observatory key-holder access</li>
+              <li>1 free workshop per quarter</li>
+            </ul>
+            <button class="btn btn-ghost" data-plan="Astronomer">Join Astronomer</button>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Gallery ===== -->
+    <section class="section alt" id="gallery">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">From our nights</p>
+            <h2>Gallery</h2>
+          </div>
+          <p class="muted">Photos taken by members at our events.</p>
+        </div>
+        <div class="gallery">
+          <figure class="g-wide g-tall"><div class="img-ph" data-label="Feature photo · e.g. Milky Way over the observatory · 1600×1000"></div><figcaption><span class="blank">Caption</span></figcaption></figure>
+          <figure><div class="img-ph" data-label="Photo · 800×600"></div><figcaption><span class="blank">Caption</span></figcaption></figure>
+          <figure><div class="img-ph" data-label="Photo · 800×600"></div><figcaption><span class="blank">Caption</span></figcaption></figure>
+          <figure><div class="img-ph" data-label="Photo · 800×600"></div><figcaption><span class="blank">Caption</span></figcaption></figure>
+          <figure><div class="img-ph" data-label="Photo · 800×600"></div><figcaption><span class="blank">Caption</span></figcaption></figure>
+          <figure class="g-wide"><div class="img-ph" data-label="Wide photo · 1600×600"></div><figcaption><span class="blank">Caption</span></figcaption></figure>
+          <figure><div class="img-ph" data-label="Photo · 800×600"></div><figcaption><span class="blank">Caption</span></figcaption></figure>
+          <figure><div class="img-ph" data-label="Photo · 800×600"></div><figcaption><span class="blank">Caption</span></figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== About ===== -->
+    <section class="section" id="about">
+      <div class="container about-grid">
+        <div>
+          <p class="eyebrow">Who we are</p>
+          <h2>Volunteer astronomers, sharing the night sky</h2>
+          <p><span class="blank block" data-field="aboutStory1">Your club's story — how and when it started, where you meet</span></p>
+          <p><span class="blank block" data-field="aboutStory2">What makes your events special, where profits go, who runs them</span></p>
+          <ul class="features">
+            <li><strong>Telescopes</strong><span class="blank" data-field="featTelescopes">Equipment on site</span></li>
+            <li><strong>Facilities</strong><span class="blank" data-field="featFacilities">e.g. warm room, toilets</span></li>
+            <li><strong>Accessibility</strong><span class="blank" data-field="featAccess">Access details</span></li>
+            <li><strong>Weather policy</strong><span class="blank" data-field="featWeather">What happens if cloudy</span></li>
+          </ul>
+        </div>
+        <div class="team">
+          <div class="img-ph about-photo" data-label="Observatory / site photo · 1200×800"></div>
+          <div class="member card"><div class="img-ph round" data-label="Team photo"></div><h4><span class="blank" data-field="team1Name">Name</span></h4><p class="muted small"><span class="blank" data-field="team1Role">Role</span></p></div>
+          <div class="member card"><div class="img-ph round" data-label="Team photo"></div><h4><span class="blank" data-field="team2Name">Name</span></h4><p class="muted small"><span class="blank" data-field="team2Role">Role</span></p></div>
+          <div class="member card"><div class="img-ph round" data-label="Team photo"></div><h4><span class="blank" data-field="team3Name">Name</span></h4><p class="muted small"><span class="blank" data-field="team3Role">Role</span></p></div>
+          <div class="member card"><div class="img-ph round" data-label="Team photo"></div><h4><span class="blank" data-field="team4Name">Name</span></h4><p class="muted small"><span class="blank" data-field="team4Role">Role</span></p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Reviews ===== -->
+    <section class="section alt">
+      <div class="container">
+        <div class="section-head center">
+          <p class="eyebrow">Reviews</p>
+          <h2>What our guests say</h2>
+        </div>
+        <div class="reviews">
+          <blockquote class="card"><p class="stars">★★★★★</p><span class="blank block" data-field="review1Text">Review text</span><div class="reviewer"><div class="img-ph round" data-label="Reviewer photo"></div><cite><span class="blank" data-field="review1Name">Name, event</span></cite></div></blockquote>
+          <blockquote class="card"><p class="stars">★★★★★</p><span class="blank block" data-field="review2Text">Review text</span><div class="reviewer"><div class="img-ph round" data-label="Reviewer photo"></div><cite><span class="blank" data-field="review2Name">Name, event</span></cite></div></blockquote>
+          <blockquote class="card"><p class="stars">★★★★★</p><span class="blank block" data-field="review3Text">Review text</span><div class="reviewer"><div class="img-ph round" data-label="Reviewer photo"></div><cite><span class="blank" data-field="review3Name">Name, event</span></cite></div></blockquote>
+        </div>
+        <p class="partners-title">Partners &amp; supporters</p>
+        <div class="partners">
+          <div class="img-ph" data-label="Partner logo"></div>
+          <div class="img-ph" data-label="Partner logo"></div>
+          <div class="img-ph" data-label="Partner logo"></div>
+          <div class="img-ph" data-label="Partner logo"></div>
+          <div class="img-ph" data-label="Partner logo"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FAQ ===== -->
+    <section class="section" id="faq">
+      <div class="container narrow">
+        <div class="section-head center">
+          <p class="eyebrow">Good to know</p>
+          <h2>Frequently asked questions</h2>
+        </div>
+        <div class="faq">
+          <details><summary>What happens if it's cloudy?</summary><p><span class="blank block" data-field="faqWeather">Answer</span></p></details>
+          <details><summary>What's your cancellation policy?</summary><p><span class="blank block" data-field="faqCancel">Answer</span></p></details>
+          <details><summary>Do I need my own telescope?</summary><p><span class="blank block" data-field="faqEquipment">Answer</span></p></details>
+          <details><summary>What should I wear?</summary><p><span class="blank block" data-field="faqClothing">Answer</span></p></details>
+          <details><summary>Are events suitable for children?</summary><p><span class="blank block" data-field="faqKids">Answer</span></p></details>
+          <details><summary>Is the site accessible?</summary><p><span class="blank block" data-field="faqAccess">Answer</span></p></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Contact ===== -->
+    <section class="section alt" id="contact">
+      <div class="container contact-grid">
+        <div>
+          <p class="eyebrow">Get in touch</p>
+          <h2>Contact us</h2>
+          <p class="muted">Questions about an event, group bookings or school visits? Send us a message.</p>
+          <ul class="contact-info">
+            <li><span>📍</span> <span class="blank" data-field="address">Address</span></li>
+            <li><span>✉️</span> <span class="blank" data-field="email">Email</span></li>
+            <li><span>☎️</span> <span class="blank" data-field="phone">Phone</span></li>
+            <li><span>🕗</span> <span class="blank" data-field="hours">Office hours</span></li>
+          </ul>
+          <div class="img-ph map-ph" data-label="Map / directions to the site"></div>
+        </div>
+        <form class="card contact-form" id="contact-form" novalidate>
+          <div class="field-row">
+            <label>Name<input type="text" name="name" required></label>
+            <label>Email<input type="email" name="email" required></label>
+          </div>
+          <label>Topic
+            <select name="topic">
+              <option>General question</option>
+              <option>Membership</option>
+              <option>Group / private booking</option>
+              <option>School visit</option>
+              <option>Volunteering</option>
+            </select>
+          </label>
+          <label>Message<textarea name="message" rows="5" required></textarea></label>
+          <button type="submit" class="btn btn-primary">Send message</button>
+          <p class="form-note" id="contact-note" role="status"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===== My bookings ===== -->
+    <section class="section" id="my-bookings">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Manage</p>
+            <h2>My bookings</h2>
+          </div>
+          <form class="lookup" id="lookup-form">
+            <input type="text" id="lookup-ref" placeholder="Booking reference" aria-label="Booking reference">
+            <button class="btn btn-ghost" type="submit">Find</button>
+          </form>
+        </div>
+        <div id="bookings-list" class="bookings-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="#home" class="logo"><div class="img-ph icon-only" data-label="Logo"></div><span class="blank" data-field="clubName">Club name</span></a>
+        <p class="muted small"><span class="blank block" data-field="footerBlurb">One-line description of the club</span></p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <a href="#events">Events</a><a href="#calendar">Calendar</a><a href="#membership">Membership</a><a href="#gallery">Gallery</a>
+      </div>
+      <div>
+        <h4>Help</h4>
+        <a href="#faq">FAQ</a><a href="#my-bookings">Manage booking</a><a href="#contact">Contact</a>
+      </div>
+      <div>
+        <h4>Newsletter</h4>
+        <form class="newsletter" id="newsletter-form">
+          <input type="email" placeholder="Your email" required aria-label="Email for newsletter">
+          <button class="btn btn-primary btn-sm" type="submit">Subscribe</button>
+        </form>
+      </div>
+    </div>
+    <p class="container copyright small muted">© <span id="year"></span> <span class="blank" data-field="clubName">Club name</span>. Demo site — no real payments are taken.</p>
+  </footer>
+
+  <!-- ===== Booking modal ===== -->
+  <div class="modal" id="booking-modal" role="dialog" aria-modal="true" aria-labelledby="bk-title" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel">
+      <button class="modal-close icon-btn" data-close aria-label="Close">✕</button>
+      <h2 id="bk-title">Book your place</h2>
+      <ol class="steps" id="bk-steps">
+        <li class="active">Tickets</li><li>Details</li><li>Payment</li><li>Confirmed</li>
+      </ol>
+
+      <div class="modal-body">
+        <form id="booking-form" novalidate>
+          <!-- Step 1: tickets -->
+          <div class="step" data-step="1">
+            <div class="bk-event" id="bk-event"></div>
+            <label>Date
+              <select id="bk-date" required></select>
+            </label>
+            <p class="small" id="bk-avail"></p>
+            <div class="tickets" id="bk-tickets"></div>
+            <fieldset class="addons">
+              <legend>Add-ons</legend>
+              <label class="check"><input type="checkbox" data-addon="Weekend telescope rental" data-price="15"> Telescope rental for the weekend <b>£15</b></label>
+              <label class="check"><input type="checkbox" data-addon="Hot drinks & snacks pack" data-price="6"> Hot drinks &amp; snacks pack <b>£6 / person</b></label>
+              <label class="check"><input type="checkbox" data-addon="Star chart & red torch" data-price="9"> Star chart &amp; red torch kit <b>£9</b></label>
+            </fieldset>
+          </div>
+
+          <!-- Step 2: details -->
+          <div class="step" data-step="2" hidden>
+            <div class="field-row">
+              <label>First name<input type="text" id="bk-first" autocomplete="given-name" required></label>
+              <label>Last name<input type="text" id="bk-last" autocomplete="family-name" required></label>
+            </div>
+            <div class="field-row">
+              <label>Email<input type="email" id="bk-email" autocomplete="email" required></label>
+              <label>Phone<input type="tel" id="bk-phone" autocomplete="tel" pattern="[0-9 +()-]{7,}" required></label>
+            </div>
+            <label>Membership number <span class="muted">(optional)</span>
+              <input type="text" id="bk-member" placeholder="e.g. OBS-1234 or AST-1234">
+            </label>
+            <label>Accessibility needs or notes <span class="muted">(optional)</span>
+              <textarea id="bk-notes" rows="3"></textarea>
+            </label>
+            <label class="check"><input type="checkbox" id="bk-terms" required> I agree to the booking terms and cancellation policy</label>
+          </div>
+
+          <!-- Step 3: payment (demo) -->
+          <div class="step" data-step="3" hidden>
+            <div class="demo-banner">Demo checkout — no card details are collected and no payment is taken.</div>
+            <fieldset class="pay-methods">
+              <legend>Payment method</legend>
+              <label class="check"><input type="radio" name="pay" value="Pay on arrival" checked> Pay on arrival (cash or card)</label>
+              <label class="check"><input type="radio" name="pay" value="Invoice by email"> Send me an invoice by email</label>
+            </fieldset>
+            <div class="promo">
+              <input type="text" id="bk-promo" placeholder="Promo code (try STARS10)">
+              <button type="button" class="btn btn-ghost btn-sm" id="bk-apply-promo">Apply</button>
+            </div>
+            <p class="small" id="bk-promo-msg" role="status"></p>
+          </div>
+
+          <!-- Step 4: confirmation -->
+          <div class="step" data-step="4" hidden>
+            <div class="confirm">
+              <div class="confirm-icon">✓</div>
+              <h3>You're booked!</h3>
+              <p>Your booking reference is</p>
+              <p class="ref" id="bk-ref"></p>
+              <p class="muted small">We've saved this booking to <a href="#my-bookings" data-close>My Bookings</a>. A confirmation would be emailed to <b id="bk-confirm-email"></b>.</p>
+              <div class="confirm-actions">
+                <button type="button" class="btn btn-ghost" id="bk-ics">Add to calendar</button>
+                <button type="button" class="btn btn-ghost" id="bk-print">Print ticket</button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <aside class="summary" id="bk-summary">
+          <h4>Order summary</h4>
+          <div id="bk-lines"></div>
+          <div class="sum-total"><span>Total</span><strong id="bk-total">£0.00</strong></div>
+        </aside>
+      </div>
+
+      <div class="modal-foot" id="bk-foot">
+        <p class="form-error" id="bk-error" role="alert"></p>
+        <button type="button" class="btn btn-ghost" id="bk-back">Back</button>
+        <button type="button" class="btn btn-primary" id="bk-next">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
